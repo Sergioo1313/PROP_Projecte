@@ -28,9 +28,10 @@ public class IDSPlayer implements IPlayer, IAuto {
      * Constructor
      * @param name Nom del jugador
      */
-    public IDSPlayer(String name) {
-        this.name = name;
+    public IDSPlayer() {
+    this.name = "JugadorPorDefecto";
     }
+
 
     @Override
     public void timeout() {
