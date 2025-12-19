@@ -2,6 +2,8 @@ package edu.upc.epsevg.prop.oust;
 
 import edu.upc.epsevg.prop.oust.players.HumanPlayer;
 import edu.upc.epsevg.prop.oust.players.RandomPlayer;
+import edu.upc.epsevg.prop.oust.players.MinimaxPlayer;
+import edu.upc.epsevg.prop.oust.players.IDSPlayer;
 
 
 import javax.swing.SwingUtilities;
@@ -39,7 +41,7 @@ public class Game {
                 // Enjoy!
                 //---------------------------------------------
                 IPlayer player1 = new MalaOustiaPlayer();
-                IPlayer player2 = new HumanPlayer("aaa");
+                IPlayer player2 = new IDSPlayer("IDSSSS");
                                 
                 
                 //---------------------------------------------
