@@ -41,14 +41,14 @@ public class Game {
                 // Enjoy!
                 //---------------------------------------------
                 IPlayer player1 = new MalaOustiaPlayer();
-                IPlayer player2 = new IDSPlayer("IDSSSS");
+                IPlayer player2 = new MinimaxPlayer(6);
                                 
                 
                 //---------------------------------------------
                 // Customitzeu els paràmetres
                 //---------------------------------------------
                 int midaCostat = 5;
-                int timeoutEnSegons = 3;
+                int timeoutEnSegons = 5;
                 boolean pauseEnAutomatic = false;
                 
                 new Board(player1 , player2, midaCostat /*mida*/,  timeoutEnSegons/*s timeout*/, pauseEnAutomatic);

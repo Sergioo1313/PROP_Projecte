@@ -1,28 +1,31 @@
 package edu.upc.epsevg.prop.oust.players;
 
 import edu.upc.epsevg.prop.oust.GameStatus;
+import edu.upc.epsevg.prop.oust.IAuto;
 import edu.upc.epsevg.prop.oust.IPlayer;
 import edu.upc.epsevg.prop.oust.PlayerMove;
 import edu.upc.epsevg.prop.oust.PlayerType;
 import edu.upc.epsevg.prop.oust.SearchType;
-import edu.upc.epsevg.prop.oust.players.MinimaxPlayer;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Jugador amb Minimax amb poda Alpha-Beta i profunditat limitada
+ * @author YourTeamName_Name1Name2
  */
-public class MinimaxPlayer implements IPlayer {
+public class MinimaxPlayer implements IPlayer, IAuto {
 
     private String name;
     private int profunditatMaxima;
     private int nodesExplored;
     private PlayerType myPlayer;
+    private volatile boolean timeout; // volatile for thread safety
 
     public MinimaxPlayer(int profunditatMaxima) {
         this.name = "MiniMax(" + profunditatMaxima + ")";
         this.profunditatMaxima = profunditatMaxima;
+        this.timeout = false;
     }
 
     @Override
@@ -31,8 +34,17 @@ public class MinimaxPlayer implements IPlayer {
     }
 
     @Override
+    public void timeout() {
+        // Called by the game when time runs out
+        // Set flag to stop the search immediately
+       this.timeout = true;
+       System.out.println(name + " - Timeout! Stopping search at depth with " + nodesExplored + " nodes explored");
+    }
+
+    @Override
     public PlayerMove move(GameStatus s) {
         nodesExplored = 0;
+        timeout = false; // Reset timeout flag at start of each move
         myPlayer = s.getCurrentPlayer();
 
         MoveResult result = minimax(s, 0, profunditatMaxima, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
@@ -48,6 +60,11 @@ public class MinimaxPlayer implements IPlayer {
     private MoveResult minimax(GameStatus state, int currentDepth, int maxDepth, int alpha, int beta, boolean maximizing) {
         nodesExplored++;
 
+        // Check timeout first - stop immediately if time is up
+        if (timeout) {
+            return new MoveResult(null, maximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE);
+        }
+
         if (state.isGameOver() || currentDepth >= maxDepth) {
             return new MoveResult(null, evaluate(state));
         }
@@ -62,6 +79,8 @@ public class MinimaxPlayer implements IPlayer {
             List<Point> bestMove = null;
 
             for (List<Point> move : allMoves) {
+                if (timeout) break; // Stop exploring if timeout
+
                 GameStatus newState = new GameStatus(state);
                 applyMove(newState, move);
 
@@ -81,6 +100,8 @@ public class MinimaxPlayer implements IPlayer {
             List<Point> bestMove = null;
 
             for (List<Point> move : allMoves) {
+                if (timeout) break; // Stop exploring if timeout
+
                 GameStatus newState = new GameStatus(state);
                 applyMove(newState, move);
 
@@ -208,7 +229,3 @@ public class MinimaxPlayer implements IPlayer {
         }
     }
 }
-
-
-
-
