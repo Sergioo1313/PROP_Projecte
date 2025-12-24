@@ -5,6 +5,7 @@ import edu.upc.epsevg.prop.oust.IPlayer;
 import edu.upc.epsevg.prop.oust.PlayerMove;
 import edu.upc.epsevg.prop.oust.PlayerType;
 import edu.upc.epsevg.prop.oust.SearchType;
+import edu.upc.epsevg.prop.oust.players.MinimaxPlayer;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,14 +13,14 @@ import java.util.List;
 /**
  * Jugador amb Minimax amb poda Alpha-Beta i profunditat limitada
  */
-public class PlayerMiniMax implements IPlayer {
+public class MinimaxPlayer implements IPlayer {
 
     private String name;
     private int profunditatMaxima;
     private int nodesExplored;
     private PlayerType myPlayer;
 
-    public PlayerMiniMax(int profunditatMaxima) {
+    public MinimaxPlayer(int profunditatMaxima) {
         this.name = "MiniMax(" + profunditatMaxima + ")";
         this.profunditatMaxima = profunditatMaxima;
     }
