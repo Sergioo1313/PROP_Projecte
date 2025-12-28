@@ -40,14 +40,14 @@ public class Game {
                 //---------------------------------------------
                 // Enjoy!
                 //---------------------------------------------
-                IPlayer player1 = new MalaOustiaPlayer();
-                IPlayer player2 = new MinimaxPlayer(6);
+                IPlayer player1 = new MOustValuablePlayer();
+                IPlayer player2 = new MinimaxPlayer(11);
                                 
                 
                 //---------------------------------------------
                 // Customitzeu els paràmetres
                 //---------------------------------------------
-                int midaCostat = 5;
+                int midaCostat = 7;
                 int timeoutEnSegons = 5;
                 boolean pauseEnAutomatic = false;
                 
