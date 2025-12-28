@@ -1,13 +1,14 @@
-package edu.upc.epsevg.prop.oust.players;
+package edu.upc.epsevg.prop.oust.players.SantervasConde;
 
 import edu.upc.epsevg.prop.oust.*;
 import java.awt.Point;
 import java.util.*;
 
 /**
- * Minimax player with Alpha-Beta pruning + Transposition Table
+ * Jugador d'Oust basat en l'algorisme Minimax amb poda Alpha-Beta 
+ * @author OustTeam
  */
-public class MinimaxPlayer implements IPlayer, IAuto {
+public class PlayerMiniMax implements IPlayer, IAuto {
 
     private String name;
     private int profunditatMaxima;
@@ -16,19 +17,32 @@ public class MinimaxPlayer implements IPlayer, IAuto {
     private volatile boolean timeout;
     private Random random;
 
-    /* =========================
-       TRANSPOSITION TABLE
-       ========================= */
-
+    /** Flag de taula de transposició: valor exacte */
     private static final int TT_EXACT = 0;
+    /** Flag de taula de transposició: cota inferior (tall alpha) */
     private static final int TT_LOWER = 1;
+    /** Flag de taula de transposició: cota superior (tall beta) */
     private static final int TT_UPPER = 2;
 
+    /**
+     * Entrada de la taula de transposició.
+     * Emmagatzema el valor avaluat, la profunditat de cerca i el tipus de valor.
+     */
     private static class TTEntry {
+        /** Profunditat restant quan es va avaluar */
         int depth;
+        /** Valor d'avaluació de la posició */
         int value;
+        /** Flag indicant el tipus de valor (EXACT, LOWER, UPPER) */
         int flag;
 
+        /**
+         * Constructor d'una entrada de taula de transposició.
+         * 
+         * @param depth Profunditat restant de cerca
+         * @param value Valor d'avaluació
+         * @param flag Tipus de valor (TT_EXACT, TT_LOWER, TT_UPPER)
+         */
         TTEntry(int depth, int value, int flag) {
             this.depth = depth;
             this.value = value;
@@ -36,13 +50,12 @@ public class MinimaxPlayer implements IPlayer, IAuto {
         }
     }
 
+    /** Taula de transposició per emmagatzemar posicions avaluades */
     private final Map<Long, TTEntry> transpositionTable = new HashMap<>(1 << 20);
 
-    /* =========================
-       ZOBRIST HASHING
-       ========================= */
-
+    /** Taula Zobrist per generar hash de posicions: [jugador][fila][columna] */
     private static final long[][][] ZOBRIST;
+    /** Hash Zobrist per indicar el torn actual */
     private static final long ZOBRIST_TURN;
 
     static {
@@ -58,24 +71,43 @@ public class MinimaxPlayer implements IPlayer, IAuto {
         ZOBRIST_TURN = r.nextLong();
     }
 
-    /* ========================= */
-
-    public MinimaxPlayer(int profunditatMaxima) {
+    /**
+     * Constructor del jugador Minimax.
+     * 
+     * @param profunditatMaxima Profunditat màxima de cerca en l'arbre de joc
+     */
+    public PlayerMiniMax(int profunditatMaxima) {
         this.name = "MiniMaxTT(" + profunditatMaxima + ")";
         this.profunditatMaxima = profunditatMaxima;
         this.random = new Random();
     }
 
+    /**
+     * Retorna el nom del jugador.
+     * 
+     * @return Nom identificatiu del jugador
+     */
     @Override
     public String getName() {
         return name;
     }
 
+    /**
+     * Notifica al jugador que s'ha exhaurit el temps de reflexió.
+     * Activa el flag de timeout per aturar la cerca immediatament.
+     */
     @Override
     public void timeout() {
         timeout = true;
     }
 
+    /**
+     * Calcula i retorna el millor moviment per a l'estat actual del joc.
+     * Utilitza l'algorisme Minimax amb poda Alpha-Beta i taula de transposició.
+     * 
+     * @param s Estat actual del joc
+     * @return Moviment seleccionat amb la seqüència de punts, profunditat i nodes explorats
+     */
     @Override
     public PlayerMove move(GameStatus s) {
         transpositionTable.clear();
@@ -97,10 +129,18 @@ public class MinimaxPlayer implements IPlayer, IAuto {
         return new PlayerMove(bestMove, profunditatMaxima, nodesExplored, SearchType.MINIMAX);
     }
 
-    /* =========================
-       MINIMAX + ALPHA-BETA + TT
-       ========================= */
-
+    /**
+     * Algorisme Minimax amb poda Alpha-Beta i taula de transposició.
+     * Explora recursivament l'arbre de joc fins a la profunditat màxima.
+     * 
+     * @param state Estat actual del joc
+     * @param depth Profunditat actual en l'arbre de cerca
+     * @param maxDepth Profunditat màxima permesa
+     * @param alpha Valor alpha per a la poda (millor valor garantit per MAX)
+     * @param beta Valor beta per a la poda (millor valor garantit per MIN)
+     * @param maximizing True si és torn del jugador maximitzador
+     * @return Resultat amb el millor moviment i la seva avaluació
+     */
     private MoveResult minimax(GameStatus state, int depth, int maxDepth,
                                int alpha, int beta, boolean maximizing) {
 
@@ -114,6 +154,7 @@ public class MinimaxPlayer implements IPlayer, IAuto {
         long hash = computeHash(state);
         int remainingDepth = maxDepth - depth;
 
+        // Consulta la taula de transposició
         TTEntry tt = transpositionTable.get(hash);
         if (tt != null && tt.depth >= remainingDepth) {
             if (tt.flag == TT_EXACT) {
@@ -128,6 +169,7 @@ public class MinimaxPlayer implements IPlayer, IAuto {
             }
         }
 
+        // Condicions de parada
         if (state.isGameOver() || depth >= maxDepth) {
             return new MoveResult(null, evaluate(state));
         }
@@ -142,6 +184,7 @@ public class MinimaxPlayer implements IPlayer, IAuto {
         int alphaOrig = alpha;
         int betaOrig = beta;
 
+        // Explora tots els moviments
         for (List<Point> move : moves) {
             if (timeout) break;
 
@@ -167,9 +210,10 @@ public class MinimaxPlayer implements IPlayer, IAuto {
                 beta = Math.min(beta, bestValue);
             }
 
-            if (beta <= alpha) break;
+            if (beta <= alpha) break; // Poda Alpha-Beta
         }
 
+        // Determina el flag per a la taula de transposició
         int flag;
         if (bestValue <= alphaOrig) {
             flag = TT_UPPER;
@@ -187,10 +231,13 @@ public class MinimaxPlayer implements IPlayer, IAuto {
         return new MoveResult(bestMove, bestValue);
     }
 
-    /* =========================
-       HASHING
-       ========================= */
-
+    /**
+     * Calcula el hash Zobrist d'un estat del joc.
+     * Utilitza XOR per combinar els valors de cada peça i el torn actual.
+     * 
+     * @param state Estat del joc
+     * @return Hash de 64 bits que representa la posició
+     */
     private long computeHash(GameStatus state) {
         long h = 0;
         int size = getBoardSize(state);
@@ -215,10 +262,13 @@ public class MinimaxPlayer implements IPlayer, IAuto {
         return h;
     }
 
-    /* =========================
-       MOVE GENERATION
-       ========================= */
-
+    /**
+     * Genera tots els moviments possibles per a l'estat actual,
+     * incloent seqüències de captures múltiples.
+     * 
+     * @param state Estat del joc
+     * @return Llista de moviments, on cada moviment és una llista de punts
+     */
     private List<List<Point>> generateAllPossibleMoves(GameStatus state) {
         List<List<Point>> allMoves = new ArrayList<>();
         generateMovesRecursive(
@@ -230,6 +280,15 @@ public class MinimaxPlayer implements IPlayer, IAuto {
         return allMoves;
     }
 
+    /**
+     * Genera moviments recursivament per gestionar les captures múltiples.
+     * Continua explorant mentre el mateix jugador pugui seguir capturant.
+     * 
+     * @param state Estat actual del joc
+     * @param startPlayer Jugador que va iniciar el torn
+     * @param currentPath Camí actual de moviments (captures encadenades)
+     * @param allMoves Llista on s'afegeixen els moviments complets
+     */
     private void generateMovesRecursive(GameStatus state, PlayerType startPlayer,
                                         List<Point> currentPath,
                                         List<List<Point>> allMoves) {
@@ -259,6 +318,12 @@ public class MinimaxPlayer implements IPlayer, IAuto {
         }
     }
 
+    /**
+     * Aplica una seqüència de moviments a un estat del joc.
+     * 
+     * @param state Estat del joc on aplicar els moviments
+     * @param moves Llista de punts que representen la seqüència de moviments
+     */
     private void applyMove(GameStatus state, List<Point> moves) {
         for (Point p : moves) {
             try {
@@ -267,10 +332,14 @@ public class MinimaxPlayer implements IPlayer, IAuto {
         }
     }
 
-    /* =========================
-       EVALUATION (unchanged)
-       ========================= */
-
+    /**
+     * Funció d'avaluació heurística de l'estat del joc.
+     * Utilitza una aproximació minimalista basada en la diferència de peces
+     * amb soroll aleatori per trencar empats.
+     * 
+     * @param state Estat del joc a avaluar
+     * @return Valor heurístic (positiu favorable, negatiu desfavorable)
+     */
     private int evaluate(GameStatus state) {
         if (state.isGameOver()) {
             PlayerType winner = state.GetWinner();
@@ -278,13 +347,20 @@ public class MinimaxPlayer implements IPlayer, IAuto {
             return winner == myPlayer ? 1_000_000 : -1_000_000;
         }
 
-        int score = random.nextInt(11) - 5;
+        int score = random.nextInt(11) - 5; // Soroll aleatori ±5
         score += (countPieces(state, myPlayer)
                 - countPieces(state, getOpponent(myPlayer))) * 150;
 
         return score;
     }
 
+    /**
+     * Compta el nombre de peces d'un jugador al tauler.
+     * 
+     * @param state Estat del joc
+     * @param player Jugador del qual comptar les peces
+     * @return Nombre de peces del jugador especificat
+     */
     private int countPieces(GameStatus state, PlayerType player) {
         int count = 0;
         int size = getBoardSize(state);
@@ -298,6 +374,12 @@ public class MinimaxPlayer implements IPlayer, IAuto {
         return count;
     }
 
+    /**
+     * Determina la mida del tauler explorant les coordenades vàlides.
+     * 
+     * @param state Estat del joc
+     * @return Mida del costat del tauler hexagonal
+     */
     private int getBoardSize(GameStatus state) {
         for (int size = 3; size <= 10; size++) {
             try {
@@ -308,12 +390,24 @@ public class MinimaxPlayer implements IPlayer, IAuto {
         return 7;
     }
 
+    /**
+     * Retorna l'oponent d'un jugador donat.
+     * 
+     * @param p Jugador actual
+     * @return L'altre jugador
+     */
     private PlayerType getOpponent(PlayerType p) {
         return p == PlayerType.PLAYER1
                 ? PlayerType.PLAYER2
                 : PlayerType.PLAYER1;
     }
 
+    /**
+     * Genera un moviment aleatori com a fallback quan no es troba millor opció.
+     * 
+     * @param s Estat del joc
+     * @return Llista de punts que representen un moviment aleatori
+     */
     private List<Point> makeRandomMove(GameStatus s) {
         List<Point> path = new ArrayList<>();
         PlayerType p = s.getCurrentPlayer();
@@ -328,10 +422,22 @@ public class MinimaxPlayer implements IPlayer, IAuto {
         return path;
     }
 
+    /**
+     * Classe interna per emmagatzemar el resultat d'una cerca Minimax.
+     * Conté el millor camí trobat i la seva avaluació.
+     */
     private static class MoveResult {
+        /** Seqüència de punts que representen el millor moviment */
         List<Point> path;
+        /** Valor d'avaluació del moviment */
         int evaluation;
 
+        /**
+         * Constructor del resultat d'un moviment.
+         * 
+         * @param path Camí del moviment
+         * @param evaluation Avaluació del moviment
+         */
         MoveResult(List<Point> path, int evaluation) {
             this.path = path;
             this.evaluation = evaluation;

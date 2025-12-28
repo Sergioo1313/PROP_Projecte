@@ -31,13 +31,7 @@ public class RandomPlayer implements IPlayer, IAuto {
         
     }
 
-    /**
-     * Decideix el moviment del jugador donat un tauler i un color de peça que
-     * ha de posar.
-     *
-     * @param s Tauler i estat actual de joc.
-     * @return el moviment que fa el jugador.
-     */
+   
     @Override
     public PlayerMove move(GameStatus s1) {
 

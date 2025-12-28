@@ -2,8 +2,8 @@ package edu.upc.epsevg.prop.oust;
 
 import edu.upc.epsevg.prop.oust.players.HumanPlayer;
 import edu.upc.epsevg.prop.oust.players.RandomPlayer;
-import edu.upc.epsevg.prop.oust.players.MinimaxPlayer;
-import edu.upc.epsevg.prop.oust.players.IDSPlayer;
+import edu.upc.epsevg.prop.oust.players.SantervasConde.PlayerMiniMax;
+import edu.upc.epsevg.prop.oust.players.SantervasConde.PlayerMiniMaxIDS;
 
 
 import javax.swing.SwingUtilities;
@@ -40,8 +40,8 @@ public class Game {
                 //---------------------------------------------
                 // Enjoy!
                 //---------------------------------------------
-                IPlayer player1 = new MOustValuablePlayer();
-                IPlayer player2 = new MinimaxPlayer(11);
+                IPlayer player1 = new MalaOustiaPlayer();
+                IPlayer player2 = new PlayerMiniMax(2);
                                 
                 
                 //---------------------------------------------

@@ -1,48 +1,55 @@
-package edu.upc.epsevg.prop.oust.players;
+package edu.upc.epsevg.prop.oust.players.SantervasConde;
 
-import edu.upc.epsevg.prop.oust.GameStatus;
-import edu.upc.epsevg.prop.oust.IAuto;
-import edu.upc.epsevg.prop.oust.IPlayer;
-import edu.upc.epsevg.prop.oust.PlayerMove;
-import edu.upc.epsevg.prop.oust.PlayerType;
-import edu.upc.epsevg.prop.oust.SearchType;
+import edu.upc.epsevg.prop.oust.*;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Jugador amb Iterative Deepening Search (IDS) per Oust
- * Explora profunditats creixents fins que s'exhaureix el temps
- * @author YourTeamName_Name1Name2
+ * Jugador d'Oust basat en Iterative Deepening Search (IDS)
+ * @author OustTeam 
  */
-public class IDSPlayer implements IPlayer, IAuto {
+public class PlayerMiniMaxIDS implements IPlayer, IAuto {
 
     private String name;
-    private boolean timeout;
+    private volatile boolean timeout;
     private int nodesExplored;
     private int maxDepthReached;
     private PlayerType myPlayer;
     private List<Point> bestMoveFound;
 
     /**
-     * Constructor
-     * @param name Nom del jugador
+     * Constructor del jugador IDS.
+     * Inicialitza el jugador amb un nom per defecte.
      */
-    public IDSPlayer() {
-    this.name = "JugadorPorDefecto";
+    public PlayerMiniMaxIDS() {
+        this.name = "JugadorPorDefecto";
     }
 
-
+    /**
+     * Notifica al jugador que s'ha exhaurit el temps de reflexió.
+     * Activa el flag de timeout per aturar la cerca immediatament.
+     */
     @Override
     public void timeout() {
         timeout = true;
     }
 
+    /**
+     * Retorna el nom del jugador.
+     * 
+     * @return Nom identificatiu del jugador amb prefix "IDS"
+     */
     @Override
     public String getName() {
         return "IDS(" + name + ")";
     }
 
+    /**
+     * Calcula i retorna el millor moviment utilitzant Iterative Deepening Search.
+     * @param s Estat actual del joc
+     * @return Moviment seleccionat amb estadístiques de cerca
+     */
     @Override
     public PlayerMove move(GameStatus s) {
         timeout = false;
@@ -74,7 +81,13 @@ public class IDSPlayer implements IPlayer, IAuto {
     }
 
     /**
-     * Algoritme Minimax amb poda Alpha-Beta i límit de profunditat
+     * @param state Estat actual del joc
+     * @param currentDepth Profunditat actual en l'arbre de cerca
+     * @param maxDepth Profunditat màxima permesa per aquesta iteració
+     * @param alpha Millor valor garantit per al jugador maximitzador
+     * @param beta Millor valor garantit per al jugador minimitzador
+     * @param maximizing True si és el torn del jugador maximitzador
+     * @return Resultat amb el millor moviment i la seva avaluació
      */
     private MoveResult minimax(GameStatus state, int currentDepth, int maxDepth, 
                               int alpha, int beta, boolean maximizing) {
@@ -152,7 +165,11 @@ public class IDSPlayer implements IPlayer, IAuto {
     }
 
     /**
-     * Genera tots els moviments possibles (incloent captures múltiples)
+     * Genera tots els moviments possibles per a l'estat actual,
+     * incloent seqüències de captures múltiples.
+     * 
+     * @param state Estat del joc
+     * @return Llista de moviments possibles, on cada moviment és una seqüència de punts
      */
     private List<List<Point>> generateAllPossibleMoves(GameStatus state) {
         List<List<Point>> allMoves = new ArrayList<>();
@@ -164,7 +181,11 @@ public class IDSPlayer implements IPlayer, IAuto {
     }
 
     /**
-     * Genera moviments recursivament per gestionar captures múltiples
+     * Genera moviments recursivament per gestionar les captures encadenades.
+     * @param state Estat actual del joc
+     * @param startPlayer Jugador que va iniciar el torn
+     * @param currentPath Camí actual de captures encadenades
+     * @param allMoves Llista on s'afegeixen els moviments complets
      */
     private void generateMovesRecursive(GameStatus state, PlayerType startPlayer, 
                                        List<Point> currentPath, List<List<Point>> allMoves) {
@@ -190,7 +211,7 @@ public class IDSPlayer implements IPlayer, IAuto {
                     allMoves.add(new ArrayList<>(currentPath));
                 }
             } catch (Exception e) {
-                // Moviment invàlid
+                // Moviment invàlid, l'ignorem
             }
             
             currentPath.remove(currentPath.size() - 1);
@@ -198,7 +219,10 @@ public class IDSPlayer implements IPlayer, IAuto {
     }
 
     /**
-     * Aplica una seqüència de moviments
+     * Aplica una seqüència de moviments a un estat del joc.
+     * 
+     * @param state Estat del joc on aplicar els moviments
+     * @param moves Seqüència de punts que representen el moviment complet
      */
     private void applyMove(GameStatus state, List<Point> moves) {
         for (Point move : moves) {
@@ -211,7 +235,9 @@ public class IDSPlayer implements IPlayer, IAuto {
     }
 
     /**
-     * Funció d'avaluació heurística millorada
+     * Funció d'avaluació heurística per a posicions no terminals.
+     * @param state Estat del joc a avaluar
+     * @return Valor heurístic (positiu si és favorable, negatiu si és desfavorable)
      */
     private int evaluate(GameStatus state) {
         if (state.isGameOver()) {
@@ -227,7 +253,7 @@ public class IDSPlayer implements IPlayer, IAuto {
         // Diferència de peces (factor principal)
         score += (myPieces - opponentPieces) * 100;
         
-        // Penalització/bonificació addicional
+        // Bonificació/penalització addicional
         if (myPieces > opponentPieces) {
             score += 50; // Bonificació per avantatge
         } else if (myPieces < opponentPieces) {
@@ -245,24 +271,31 @@ public class IDSPlayer implements IPlayer, IAuto {
     }
 
     /**
-     * Avaluació per estats terminals
+     * Avaluació per a estats terminals del joc.
+     * 
+     * @param state Estat terminal del joc
+     * @return +1.000.000 si guanyem, -1.000.000 si perdem, 0 si empat
      */
     private int evaluateTerminal(GameStatus state) {
         PlayerType winner = state.GetWinner();
         
         if (winner == null) {
-            return 0;
+            return 0; // Empat
         }
         
         if (winner == myPlayer) {
-            return 1000000;
+            return 1000000; // Victòria
         } else {
-            return -1000000;
+            return -1000000; // Derrota
         }
     }
 
     /**
-     * Compta peces d'un jugador
+     * Compta el nombre de peces d'un jugador al tauler.
+     * 
+     * @param state Estat del joc
+     * @param player Jugador del qual comptar les peces
+     * @return Nombre total de peces del jugador
      */
     private int countPieces(GameStatus state, PlayerType player) {
         int count = 0;
@@ -276,7 +309,7 @@ public class IDSPlayer implements IPlayer, IAuto {
                         count++;
                     }
                 } catch (Exception e) {
-                    // Fora del tauler
+                    // Posició fora del tauler
                 }
             }
         }
@@ -285,7 +318,10 @@ public class IDSPlayer implements IPlayer, IAuto {
     }
 
     /**
-     * Determina la mida del tauler
+     * Determina la mida del costat del tauler hexagonal.
+     * 
+     * @param state Estat del joc
+     * @return Mida del costat del tauler (per defecte 7)
      */
     private int getBoardSize(GameStatus state) {
         for (int size = 3; size <= 10; size++) {
@@ -300,14 +336,21 @@ public class IDSPlayer implements IPlayer, IAuto {
     }
 
     /**
-     * Obté l'oponent
+     * Retorna el jugador oponent.
+     * 
+     * @param player Jugador actual
+     * @return El jugador contrari
      */
     private PlayerType getOpponent(PlayerType player) {
         return player == PlayerType.PLAYER1 ? PlayerType.PLAYER2 : PlayerType.PLAYER1;
     }
 
     /**
-     * Moviment aleatori de fallback
+     * Genera un moviment aleatori com a mesura de seguretat.
+     * S'utilitza quan no s'ha pogut trobar cap moviment vàlid.
+     * 
+     * @param s Estat del joc
+     * @return Moviment aleatori vàlid
      */
     private PlayerMove makeRandomMove(GameStatus s) {
         List<Point> path = new ArrayList<>();
@@ -327,12 +370,21 @@ public class IDSPlayer implements IPlayer, IAuto {
     }
 
     /**
-     * Classe interna per resultats
+     * Classe interna per emmagatzemar el resultat d'una cerca Minimax.
+     * Encapsula el camí del moviment i la seva avaluació.
      */
     private class MoveResult {
+        /** Seqüència de punts que representen el moviment */
         List<Point> path;
+        /** Valor heurístic del moviment */
         int evaluation;
 
+        /**
+         * Constructor del resultat d'un moviment.
+         * 
+         * @param path Camí del moviment (seqüència de punts)
+         * @param evaluation Avaluació heurística del moviment
+         */
         MoveResult(List<Point> path, int evaluation) {
             this.path = path;
             this.evaluation = evaluation;
